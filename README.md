@@ -42,7 +42,7 @@ Downloaded TAR balls would be inside ```~/MWTC/dl```
 
 (Delete the dl folder to force re-download)
 
-Extracted archives would be inside ```~/MWTC/source```
+Extracted archives would be inside ```~/MWTC/pkgs```
 
 (If the archive's MD5 has not been changed, decompression is skipped)
 
