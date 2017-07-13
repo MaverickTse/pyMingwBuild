@@ -9,6 +9,7 @@ To build 32bit and 64bit non-multilib Mingw-w64 toolchain in a bash-like environ
 ## Features
 - Automatically look for latest component versions (Not Hard-Coded) if not specified
 - Preferred version string, e.g. "7.1.0", for GCC, Binutils and Mingw-w64 can be set on commandline
+- Choosable from SJLJ and DW2 exception handling for win32 build from commandline
 - Working Folder(aka. Sandbox) can be set on commandline. Meaning this script can be placed anywhere
 - Clean terminal output. ONLY in case of error, outputs are logged into files in components' build folder
 - Only use FTP and HTTP downloads, no need of wget or git or svn
@@ -92,6 +93,14 @@ when done
 - winpthreads is used as the default threading library
 - slow on WSL (a problem of M$)
 
+
+## Parameters
+- ```--help``` print the help text
+- ```--prefix="~/MWTC"``` set the sandbox folder
+- ```--sjlj``` Force win32 to use sjlj exception handling
+- ```--gcc="6.4.0"``` set the preferred GCC version. Use latest if not found
+- ```--binutils="99"``` set the preferred Binutils version. Use latest if not found
+- ```--mingw="99"``` set the preferred Mingw-w64 version. Use latest if not found
 
 ## Contribution Guideline
 - Open up a new ISSUE prior MAJOR change!
