@@ -172,6 +172,8 @@ TARGET = {
     "x86_64": "x86_64-w64-mingw32"
 }
 
+USE_SJLJ = False
+
 PERFORMANCE_COUNTER = {}
 
 HELP_TEXT = """\
@@ -1249,7 +1251,7 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
     :param mpc_prefix: string as returned by build_mpc()
     :return: tuple of build_paths on success, (None,None) when failed
     """
-    global WORK_FOLDER, LOCATIONS, TARGET
+    global WORK_FOLDER, LOCATIONS, TARGET, USE_SJLJ
     build_target = ["i686", "x86_64"]
     os.chdir(WORK_FOLDER)
     abs_source = os.path.abspath(source_folder)
@@ -1283,11 +1285,17 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
         arg_target = "--target=" + TARGET[target]
         arg_prefix = '--prefix=' + abs_prefix[target]
         arg_sysroot = '--with-sysroot=' + abs_prefix[target]
+        arg_sjlj = ""
+        if USE_SJLJ and (target == "i686"):
+            arg_sjlj += "--enable-sjlj-exceptions"
+        else:
+            arg_sjlj += "--disable-sjlj-exceptions"
+
         print("Configuring GCC ", target, "...")
         result = subprocess.run(["sh", config_path, arg_build, arg_target, arg_prefix, arg_sysroot,
                                   "--enable-static", "--disable-shared", "--disable-nls",
                                   "--disable-multilib", '--enable-languages=c,c++', "--enable-lto",
-                                  "--enable-fully-dynamic-string",
+                                  "--enable-fully-dynamic-string", "--enable-threads=posix", arg_sjlj,
                                   arg_mpc, arg_mpfr, arg_isl, arg_mpc, arg_gmp],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
@@ -1673,9 +1681,15 @@ def generate_documentation():
     use_script_template = """\
     #!/bin/sh
     export PATH="{new_path}"
-    printf "The PATH is now $PATH\\n"
     {arch}-w64-mingw32-gcc -v
     """
+
+    restore_script_template = """\
+    #!/bin/sh
+    export PATH="{new_path}"
+    printf "Original PATH restored\\n"
+    """
+
     with open("use32.sh", "w") as file:
         file.write(use_script_template.format(new_path=i686_new_path, arch="i686"))
     st = os.stat("use32.sh")
@@ -1689,7 +1703,7 @@ def generate_documentation():
     print("Use use64.sh to setup for 64bit toolchain\n")
 
     with open("restore.sh", "w") as file:
-        file.write(use_script_template.format(new_path=original_path))
+        file.write(restore_script_template.format(new_path=original_path))
     st = os.stat("restore.sh")
     os.chmod("restore.sh", st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     print("Use restore.sh to restore the PATH variable\n")
@@ -1864,6 +1878,19 @@ def main():
     timer2 = datetime.datetime.utcnow()
     PERFORMANCE_COUNTER["CRT"] = timer2 - timer1
 
+    # build winpthreads
+    timer1 = datetime.datetime.utcnow()
+    state = build_winpthreads(source_folders["mingw-w64"], LOCATIONS["mingw_w64_build_dir"], SYSTEM_TYPE)
+    if not state:
+        print_error()
+        print("Failed to build winpthreads. Build terminated.")
+        return False
+    else:
+        print_ok()
+        print("Built winpthreads")
+    timer2 = datetime.datetime.utcnow()
+    PERFORMANCE_COUNTER["winpthreads"] = timer2 - timer1
+
     # build GCC 2 of 2
     timer1 = datetime.datetime.utcnow()
     state = build_gcc2([path32, path64])
@@ -1877,18 +1904,6 @@ def main():
     timer2 = datetime.datetime.utcnow()
     PERFORMANCE_COUNTER["GCC2"] = timer2 - timer1
 
-    # build winpthreads
-    timer1 = datetime.datetime.utcnow()
-    state = build_winpthreads(source_folders["mingw-w64"], LOCATIONS["mingw_w64_build_dir"], SYSTEM_TYPE)
-    if not state:
-        print_error()
-        print("Failed to build winpthreads. Build terminated.")
-        return False
-    else:
-        print_ok()
-        print("Built winpthreads")
-    timer2 = datetime.datetime.utcnow()
-    PERFORMANCE_COUNTER["winpthreads"] = timer2 - timer1
     # Generate readme and helper scripts
     generate_documentation()
     return True
@@ -1901,6 +1916,7 @@ parser.add_argument("--prefix", "-p", default="~/MWTC/", help="Path to the sandb
 parser.add_argument("--gcc", "-g", default="99", help="Version string for preferred GCC[99]")
 parser.add_argument("--binutils", "-b", default="99", help="Version string for preferred Binutils[99]")
 parser.add_argument("--mingw", "-m", default="99", help="Version string for preferred Mingw-w64[99]")
+parser.add_argument("--sjlj", action='store_true', help="Use sjlj exception handling for win32. Default is dw2")
 raw_args = parser.parse_args()
 args = vars(raw_args)
 WORK_FOLDER = args["prefix"]
@@ -1909,6 +1925,10 @@ PREFERRED_FILE_VERSION["gcc"] = args["gcc"]
 PREFERRED_FOLDER_VERSION["binutils"] = args["binutils"]
 PREFERRED_FILE_VERSION["binutils"] = args["binutils"]
 PREFERRED_FILE_VERSION["mingw64"] = args["mingw"]
+if args["sjlj"]:
+    USE_SJLJ = True
+else:
+    USE_SJLJ = False
 
 print("The sandbox would be: ", WORK_FOLDER)
 ret = main()
