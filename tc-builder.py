@@ -47,6 +47,8 @@ import subprocess
 import argparse
 import hashlib
 import datetime
+import time
+import socket
 from ftplib import FTP
 from urllib import request, response
 from urllib.parse import urljoin, urlparse
@@ -60,6 +62,28 @@ WORK_FOLDER = "~/MWTC/"
 CONFIG_GUESS = "https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.guess"
 GNU_SERVER = "ftp.yzu.edu.tw"  # All GNU FTP servers do not support MLST/D!
 GCC_SERVER = "gcc.gnu.org"
+
+GNU_MIRRORS = [
+        "mirror.jre655.com",  # Japan
+        "ftp.yzu.edu.tw",  # Taiwan
+        "reflection.oss.ou.edu",  # US
+        "mirrors.ocf.berkeley.edu",  # US
+        "mirrorservice.org",  # UK
+        "ftp.igh.cnrs.fr",  # France
+        "mirror.checkdomain.de",  # Germany
+        "ftp.unicamp.br",  # Brazil
+        "gnu.mirror.iweb.com",  # Canada
+        "mirror.tochlab.net",  # Russia
+        "ftp.gnu.org"  # Official
+    ]
+
+GCC_MIRRORS = [
+        "ftp.irisa.fr",  # France
+        "ftp.fu-berlin.de",  # Germany
+        "ftp.ntua.gr",  # Greece
+        "ftp.nluug.nl",  # Netherlands
+        "gcc.gnu.org"  # Official
+    ]
 
 FTP_DOWNLOADS = ["binutils", "gcc", "gmp", "mpfr", "mpc", "isl", "cloog"]
 
@@ -383,6 +407,66 @@ def ftp_get(server, folder, filename_re, file_version_capture_group, save_path=N
     print("[FTP] Download Finished")
     ftp.quit()
     return final_path
+
+
+def select_mirror(server_list=[], priority=1, protocol="FTP", timeout=5.0):
+    """
+    Select a server mirror based on connection time
+    :param server_list: A list of server names
+    :param priority: 1 for the fastest server, 2 for the 2nd fast, etc.
+    :param protocol: Decide PORT to use. Accepts HTTP, HTTPS, FTP, SFTP, SSH
+    :param timeout: time-out threshold in second
+    :return: a tuple of (server_name, latency)
+    """
+    benchmark = {} # to hold the server: connect time pairs
+    # Set the ports to connect based on protocol
+    port = 1
+    if protocol == "HTTP":
+        port = 80
+    elif protocol == "HTTPS":
+        port = 443
+    elif protocol == "FTP":
+        port = 21
+    elif (protocol == "SFTP") or (protocol == "SSH"):
+        port = 22
+    else:
+        port = 1
+    # Test each server
+    for server in server_list:
+        # First need a default socket
+        sock = socket.socket()
+        sock.settimeout(timeout)
+        start = time.time()
+        try:
+            sock.connect((server, port))
+            end = time.time()
+            benchmark[server] = end - start
+            sock.close()
+        except socket.herror as e:
+            print("Hostname error for ", server)
+            print(e)
+            sock.close()
+            continue
+        except socket.gaierror as e:
+            print("Address error for ", server)
+            print(e)
+            sock.close()
+            continue
+        except socket.timeout:
+            print("Server ", server, " timed out")
+            sock.close()
+            continue
+
+    # fix priority number
+    valid_servers = len(benchmark)
+    if valid_servers <= 0:
+        print("[WARNING] No mirror available!")
+        return None, None
+    priority = min([valid_servers, priority]) - 1
+    priority = max([0, priority])  # keep it >=0
+    # Sort server list
+    sorted_servers = sorted(benchmark.items(), key=itemgetter(1), reverse=False)
+    return sorted_servers[priority]
 
 
 def ftp_get_by_component(component):
@@ -1934,7 +2018,25 @@ if args["sjlj"]:
 else:
     USE_SJLJ = False
 
+print("Testing GNU Server Mirrors...")
+mirror, latency = select_mirror(GNU_MIRRORS, 1)
+if mirror:
+    GNU_SERVER = mirror
+    print("Selecting mirror ", mirror, " with latency ", latency, "s")
+else:
+    print("Using default ", GNU_SERVER, 1)
+
+print("Testing GCC Server Mirrors...")
+mirror, latency = select_mirror(GCC_MIRRORS)
+if mirror:
+    GCC_SERVER = mirror
+    print("Selecting mirror ", mirror, " with latency ", latency, "s")
+else:
+    print("Using default ", GCC_SERVER)
+
+
 print("The sandbox would be: ", WORK_FOLDER)
+
 ret = main()
 if ret:
     print_ok()
