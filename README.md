@@ -3,11 +3,11 @@ Python(Anaconda) script to build Mingw-w64 cross-toolchain
 
 
 ## What it does
-To build 32bit and 64bit non-multilib Mingw-w64 toolchain in a bash-like environment
+To build 32bit and 64bit non-multilib STATIC Mingw-w64 toolchain in a bash-like environment
 
 
 ## Features
-- Automatically look for latest component versions (Not Hard-Coded) if not specified
+- Automatically looks for latest component versions (Not Hard-Coded) if not specified
 - Preferred version string, e.g. "7.1.0", for GCC, Binutils and Mingw-w64 can be set on commandline
 - Choosable from SJLJ and DW2 exception handling for win32 build from commandline
 - Working Folder(aka. Sandbox) can be set on commandline. Meaning this script can be placed anywhere
@@ -72,25 +72,32 @@ After the thing successfully built, you may:
 ```bash
 cd ~/MWTC
 source use64.sh
-x86_64-w64-mingw32-gcc -v
 ```
 
 To start using the 64bit Mingw toolchain
 
-and
+Test compile with:
+
+```bash
+x86_64-w64-mingw32-g++ std=c++14 compiler-test.cpp -o /windows/accessible/folder/compiler-test64.exe
+```
+
+and run compiler-test64.exe from Windows. Check if multiple CPU cores have increased activity.
+
+finally,
 
 ```bash
 source restore.sh
 ```
 
-when done
+to restore PATH when done
 
 ## Potential Issues
 - Only tested on Ubuntu 16.04 and Win10 WSL(Creators Update)
-- DO NOT USE Sandbox path with SPACE in it (not tested)
-- Dirty Code (Yeah, refractoring welcome :-) )
-- gendef is not being built in current version
-- winpthreads is used as the default threading library
+- DO NOT USE Sandbox path with SPACE and CJK characters in it (not tested)
+- Dirty Code (Yeah, refractoring welcome :blush: )
+- gendef and widl are not being built in current version (anyone need these?)
+- winpthreads is used as the default threading library (but C++ threading SHOULD works)
 - slow on WSL (a problem of M$)
 
 
