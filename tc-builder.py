@@ -26,9 +26,13 @@ gmp [x86_64, host compiler]
 mpfr/isl/cloog [x86_64, host compiler]
 mpc [x86_64, host compiler]
 GCC bootstrap compiler [i686 and x86_64, host compiler]
+^ NEED to specify posix as threading lib, or will be win32 by default
+^ This is where you set SJLJ or DW2 exceptions model (for win32)
 Mingw-w64 CRT [i686 and x86_64, Mingw-w64 compiler]
-GCC [i686 and x86_64, host compiler]
 winpthreads [i686 and x86_64, Mingw-w64 compiler]
+^ MUST be built before libGCC or threading won't work properly
+GCC [i686 and x86_64, host compiler]
+
 
 The CRT build script is relatively dumb and need to set
 CC variable to the the mingw compiler in order to work.
