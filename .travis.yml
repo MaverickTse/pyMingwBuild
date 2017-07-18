@@ -12,20 +12,19 @@ before_script:
 - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-engine
 - docker pull ubuntu:latest
 
-script:
-- >
-docker run -d --name buildvm --net=host ubuntu:latest /bin/sh -c "cd ~;
-sudo apt-get install -y build-essential automake texinfo yasm wget dos2unix;
-wget https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh -O condainstall.sh;
-condainstall.sh -b -p $HOME/Anaconda;
-source $HOME/Anaconda/bin/activate;
-conda config --set always_yes yes --set changeps1 no;
-conda update -q conda;
-cd ~;
-wget https://raw.githubusercontent.com/MaverickTse/pyMingwBuild/master/tc-builder.py;
-dos2unix tc-builder.py;
-python3 tc-builder.py;
-cd ~/MWTC;
-source use64.sh;
-x86_64-w64-mingw32-g++ std=c++14 compiler-test.cpp -o test64.exe;
-source restore.sh;"
+script: >
+  docker run -d --name buildvm --net=host ubuntu:latest /bin/sh -c "cd ~;
+  sudo apt-get install -y build-essential automake texinfo yasm wget dos2unix;
+  wget https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh -O condainstall.sh;
+  condainstall.sh -b -p $HOME/Anaconda;
+  source $HOME/Anaconda/bin/activate;
+  conda config --set always_yes yes --set changeps1 no;
+  conda update -q conda;
+  cd ~;
+  wget https://raw.githubusercontent.com/MaverickTse/pyMingwBuild/master/tc-builder.py;
+  dos2unix tc-builder.py;
+  python3 tc-builder.py;
+  cd ~/MWTC;
+  source use64.sh;
+  x86_64-w64-mingw32-g++ std=c++14 compiler-test.cpp -o test64.exe;
+  source restore.sh;"
