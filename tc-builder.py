@@ -53,6 +53,8 @@ from ftplib import FTP
 from urllib import request, response
 from urllib.parse import urljoin, urlparse
 from operator import itemgetter
+
+import sys
 from bs4 import BeautifulSoup
 from shutil import rmtree, move
 from colorama import init, Fore, Back, Style, deinit
@@ -1392,8 +1394,12 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
             with open("config_error.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
             return None, None
         # actual build
         cpu_count = str(run_nproc())
@@ -1406,8 +1412,12 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
             with open("build_error.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
             return None, None
         # Install GCC
         print("Installing GCC (1 of 2) ", target, "...")
@@ -1419,8 +1429,12 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
             with open("install_error.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
             return None, None
 
     os.chdir(WORK_FOLDER)
@@ -1559,8 +1573,12 @@ def build_gcc2(build_folder):
             with open("build_error_libgcc.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
             return None
 
         print("Installing libGCC...")
@@ -1572,8 +1590,12 @@ def build_gcc2(build_folder):
             with open("install_error_libgcc.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
             return None
 
         print("Building GCC in ", folder, "...")
@@ -1586,8 +1608,12 @@ def build_gcc2(build_folder):
             with open("build_error_gcc.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
+                if os.environ["CI"]:
+                    print(message)
             return None
 
         print("Installing GCC...")
@@ -2044,4 +2070,5 @@ if ret:
 else:
     print_error()
     print("Something goes wrong. Please check error logs.")
+    sys.exit(1)
 deinit()
