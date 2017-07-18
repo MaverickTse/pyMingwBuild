@@ -60,7 +60,6 @@ from shutil import rmtree, move
 from colorama import init, Fore, Back, Style, deinit
 
 # Constants
-REDIRECT = subprocess.STDOUT if "CI" in os.environ else subprocess.PIPE
 WORK_FOLDER = "~/MWTC/"
 CONFIG_GUESS = "https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.guess"
 GNU_SERVER = "ftp.yzu.edu.tw"  # All GNU FTP servers do not support MLST/D!
@@ -643,7 +642,11 @@ def guess_config():
     if "sh" not in shell_type:
         print("guess.config need to be run in bash-like shell")
         return None
-    system_string = subprocess.run(["sh", "config.guess"], stdout=REDIRECT).stdout.decode("utf-8")
+    system_string = ""
+    if "CI" in os.environ:
+        system_string = subprocess.run(["sh", "config.guess"], stdout=subprocess.PIPE).stdout.decode("utf-8")
+    else:
+        system_string = subprocess.run(["sh", "config.guess"], stdout=subprocess.STDOUT).stdout.decode("utf-8")
 
     return system_string
 
@@ -653,7 +656,7 @@ def run_nproc():
     Get cpu count via nproc
     :return: number of cpu core
     """
-    return_string = subprocess.run(["nproc"], stdout=REDIRECT).stdout.decode("utf-8")
+    return_string = subprocess.run(["nproc"], stdout=subprocess.PIPE).stdout.decode("utf-8")
     cores = int(return_string)
     if cores > 2:
         return cores-1
@@ -752,7 +755,7 @@ def build_binutils(source_folder, build_folder, system_type):
     print("Configuring Binutils x86...")
     run_result = subprocess.run(["sh", configure_script, arg_build, arg_target, arg_prefix, arg_sysroot,
                                  "--disable-multilib", "--disable-nls", "--disable-shared", "--enable-static"],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if run_result.returncode:
         print("Error configuring Binutils x86!")
         output_message = run_result.stdout.decode("utf-8")
@@ -764,7 +767,7 @@ def build_binutils(source_folder, build_folder, system_type):
     print("Done configuring Binutils x86")
     cpu_count = str(run_nproc())
     print("Building Binutils x86")
-    run_result = subprocess.run(["make", "-j", str(cpu_count)], stdout=REDIRECT, stderr=subprocess.PIPE)
+    run_result = subprocess.run(["make", "-j", str(cpu_count)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if run_result.returncode:
         print("Error building Binutils x86!")
         output_message = run_result.stdout.decode("utf-8")
@@ -775,7 +778,7 @@ def build_binutils(source_folder, build_folder, system_type):
         return None
     print("Finished building Binutils x86")
     print("Installing Binutils x86")
-    run_result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    run_result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if run_result.returncode:
         print("Error installing Binutils x86!")
         output_message = run_result.stdout.decode("utf-8")
@@ -792,7 +795,7 @@ def build_binutils(source_folder, build_folder, system_type):
     print("Configuring Binutils x86_64...")
     run_result = subprocess.run(["sh", configure_script, arg_build, arg_target, arg_prefix, arg_sysroot,
                                  "--disable-multilib", "--disable-nls", "--disable-shared", "--enable-static"],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if run_result.returncode:
         print("Error configuring Binutils x86_64!")
         output_message = run_result.stdout.decode("utf-8")
@@ -803,7 +806,7 @@ def build_binutils(source_folder, build_folder, system_type):
         return None
     print("Done configuring Binutils x86_64")
     print("Building Binutils x86_64")
-    run_result = subprocess.run(["make", "-j", str(cpu_count)], stdout=REDIRECT, stderr=subprocess.PIPE)
+    run_result = subprocess.run(["make", "-j", str(cpu_count)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if run_result.returncode:
         print("Error building Binutils x86_64!")
         output_message = run_result.stdout.decode("utf-8")
@@ -814,7 +817,7 @@ def build_binutils(source_folder, build_folder, system_type):
         return None
     print("Finished building Binutils x86_64")
     print("Installing Binutils x86_64")
-    run_result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    run_result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if run_result.returncode:
         print("Error installing Binutils x86!")
         output_message = run_result.stdout.decode("utf-8")
@@ -861,7 +864,7 @@ def build_mingw_header(source_folder, build_folder, system_type):
     os.chdir(build_x86)
     print("Configuring Mingw-w64 x86 headers...")
     result = subprocess.run(["sh", config_source, "--enable-sdk-all", arg_build
-                             , arg_host, arg_prefix], stdout=REDIRECT, stderr=subprocess.PIPE)
+                             , arg_host, arg_prefix], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
         print("Failed to configure Mingw-w64 x86 headers!")
         log_file = os.path.join(build_x86, "config_error.log")
@@ -874,7 +877,7 @@ def build_mingw_header(source_folder, build_folder, system_type):
     print("Configured Mingw-w64 x86 headers")
     # Install headers
     print("Installing Mingw-w64 x86 headers...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
         print("Failed to install Mingw-w64 x86 headers!")
         log_file = os.path.join(build_x86, "install_error.log")
@@ -904,7 +907,7 @@ def build_mingw_header(source_folder, build_folder, system_type):
     os.chdir(build_x86_64)
     print("Configuring Mingw-w64 x86_64 headers...")
     result = subprocess.run(["sh", config_source, "--enable-sdk-all", arg_build
-                                , arg_host, arg_prefix], stdout=REDIRECT, stderr=subprocess.PIPE)
+                                , arg_host, arg_prefix], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
         print("Failed to configure Mingw-w64 x86 headers!")
         log_file = os.path.join(build_x86_64, "config_error.log")
@@ -917,7 +920,7 @@ def build_mingw_header(source_folder, build_folder, system_type):
     print("Configured Mingw-w64 x86_64 headers")
     # Install headers
     print("Installing Mingw-w64 x86_64 headers...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
         print("Failed to install Mingw-w64 x86_64 headers!")
         log_file = os.path.join(build_x86_64, "install_error.log")
@@ -976,7 +979,7 @@ def build_gmp(source_folder, build_folder, system_type):
     print("Configuring GMP...")
     result = subprocess.run(["sh", config_path, arg_build, arg_prefix, "--enable-fat",
                              "--disable-shared", "--enable-static", "--enable-cxx",
-                             "CPPFLAGS=-fexceptions"], stdout=REDIRECT, stderr=subprocess.PIPE)
+                             "CPPFLAGS=-fexceptions"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error configuring GMP!")
@@ -990,7 +993,7 @@ def build_gmp(source_folder, build_folder, system_type):
 
     cpu_cores = str(run_nproc())
     print("Building GMP...")
-    result = subprocess.run(["make", "-j", cpu_cores], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error building GMP!")
@@ -1002,7 +1005,7 @@ def build_gmp(source_folder, build_folder, system_type):
         restore_env(old_env)
         return None
     print("Installing GMP...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error installing GMP!")
@@ -1053,7 +1056,7 @@ def build_mpfr(source_folder, build_folder, system_type, gmp_prefix):
     print("Configuring MPFR...")
     result = subprocess.run(["sh", config_path, arg_build, arg_prefix, arg_gmp,
                              "--disable-shared", "--enable-static"],
-                            stdout=REDIRECT, stderr=subprocess.PIPE)
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error configuring MPFR!")
@@ -1067,7 +1070,7 @@ def build_mpfr(source_folder, build_folder, system_type, gmp_prefix):
 
     cpu_cores = str(run_nproc())
     print("Building MPFR...")
-    result = subprocess.run(["make", "-j", cpu_cores], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error building MPFR!")
@@ -1079,7 +1082,7 @@ def build_mpfr(source_folder, build_folder, system_type, gmp_prefix):
         restore_env(old_env)
         return None
     print("Installing MPFR...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error installing MPFR!")
@@ -1130,7 +1133,7 @@ def build_isl(source_folder, build_folder, system_type, gmp_prefix):
     print("Configuring ISL...")
     result = subprocess.run(["sh", config_path, arg_build, arg_prefix, arg_gmp,
                              "--disable-shared", "--enable-static", "--with-piplib=no", "--with-clang=no"],
-                            stdout=REDIRECT, stderr=subprocess.PIPE)
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error configuring ISL!")
@@ -1144,7 +1147,7 @@ def build_isl(source_folder, build_folder, system_type, gmp_prefix):
 
     cpu_cores = str(run_nproc())
     print("Building ISL...")
-    result = subprocess.run(["make", "-j", cpu_cores], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error building ISL!")
@@ -1156,7 +1159,7 @@ def build_isl(source_folder, build_folder, system_type, gmp_prefix):
         restore_env(old_env)
         return None
     print("Installing ISL...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error installing ISL!")
@@ -1207,7 +1210,7 @@ def build_cloog(source_folder, build_folder, system_type, gmp_prefix):
     print("Configuring CLoog...")
     result = subprocess.run(["sh", config_path, arg_build, arg_prefix, arg_gmp,
                              "--disable-shared", "--enable-static", "--with-bits=gmp", "--with-isl=bundled"],
-                            stdout=REDIRECT, stderr=subprocess.PIPE)
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error configuring cloog!")
@@ -1221,7 +1224,7 @@ def build_cloog(source_folder, build_folder, system_type, gmp_prefix):
 
     cpu_cores = str(run_nproc())
     print("Building CLoog...")
-    result = subprocess.run(["make", "-j", cpu_cores], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error building cloog!")
@@ -1233,7 +1236,7 @@ def build_cloog(source_folder, build_folder, system_type, gmp_prefix):
         restore_env(old_env)
         return None
     print("Installing CLoog...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error installing cloog!")
@@ -1286,7 +1289,7 @@ def build_mpc(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix)
     print("Configuring MPC...")
     result = subprocess.run(["sh", config_path, arg_build, arg_prefix, arg_gmp, arg_mpfr,
                              "--disable-shared", "--enable-static"],
-                            stdout=REDIRECT, stderr=subprocess.PIPE)
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error configuring MPC!")
@@ -1300,7 +1303,7 @@ def build_mpc(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix)
 
     cpu_cores = str(run_nproc())
     print("Building MPC...")
-    result = subprocess.run(["make", "-j", cpu_cores], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error building MPC!")
@@ -1312,7 +1315,7 @@ def build_mpc(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix)
         restore_env(old_env)
         return None
     print("Installing MPC...")
-    result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+    result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode:
         print("Error installing MPC!")
@@ -1388,7 +1391,7 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
                                   "--disable-multilib", '--enable-languages=c,c++', "--enable-lto",
                                   "--enable-fully-dynamic-string", "--enable-threads=posix", arg_sjlj,
                                   arg_mpc, arg_mpfr, arg_isl, arg_mpc, arg_gmp],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to configure GCC (1 of 2) ", TARGET[target])
@@ -1406,7 +1409,7 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
         cpu_count = str(run_nproc())
         print("Building GCC (1 of 2) ", target, "...")
         result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to build GCC (1 of 2) ", TARGET[target])
@@ -1423,7 +1426,7 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
         # Install GCC
         print("Installing GCC (1 of 2) ", target, "...")
         result = subprocess.run(["make", "install-gcc"],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to install GCC (1 of 2) ", TARGET[target])
@@ -1499,7 +1502,7 @@ def build_crt(source_folder, build_folder, system_type):
 
         print("Configuring Mingw-w64 CRT ", t, "...")
         result = subprocess.run(["sh", config_path, arg_build, arg_host, arg_prefix, arg_sysroot],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Error configuring Mingw-w64 CRT", t)
@@ -1512,7 +1515,7 @@ def build_crt(source_folder, build_folder, system_type):
         # actual build
         cpu_count = str(run_nproc())
         print("Building Mingw-w64 CRT", t, "...")
-        result = subprocess.run(["make", "-j", cpu_count], stdout=REDIRECT, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Error building Mingw-w64 CRT", t)
@@ -1524,7 +1527,7 @@ def build_crt(source_folder, build_folder, system_type):
                 return None
         # install
         print("Installing Mingw-w64 CRT", t, "...")
-        result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Error installing Mingw-w64 CRT", t)
@@ -1566,7 +1569,7 @@ def build_gcc2(build_folder):
         os.chdir(folder)
         print("Building libGCC in ", folder, "...")
         result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if result.returncode:
             print_error()
@@ -1583,7 +1586,7 @@ def build_gcc2(build_folder):
             return None
 
         print("Installing libGCC...")
-        result = subprocess.run(["make", "install-target-libgcc"], stdout=REDIRECT, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "install-target-libgcc"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if result.returncode:
             print_error()
@@ -1600,7 +1603,7 @@ def build_gcc2(build_folder):
             return None
 
         print("Building GCC in ", folder, "...")
-        result = subprocess.run(["make", "-j", cpu_cores], stdout=REDIRECT,
+        result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
 
         if result.returncode:
@@ -1618,7 +1621,7 @@ def build_gcc2(build_folder):
             return None
 
         print("Installing GCC...")
-        result = subprocess.run(["make", "install-strip"], stdout=REDIRECT, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "install-strip"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if result.returncode:
             print_error()
@@ -1688,7 +1691,7 @@ def build_winpthreads(source_folder, build_folder, system_type):
         print("Configuring winpthreads ", arch, "...")
         result = subprocess.run(["sh", config_source, arg_build, arg_host, arg_prefix,
                                  "--enable-static", "--disable-shared"],
-                                stdout=REDIRECT, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to configure winpthreads ", arch)
@@ -1701,7 +1704,7 @@ def build_winpthreads(source_folder, build_folder, system_type):
 
         # Run Make
         print("Building winpthreads ", arch, "...")
-        result = subprocess.run(["make"], stdout=REDIRECT, stderr=subprocess.PIPE)
+        result = subprocess.run(["make"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to build winpthreads ", arch)
@@ -1714,7 +1717,7 @@ def build_winpthreads(source_folder, build_folder, system_type):
 
         # Install
         print("Installing winpthreads ", arch, "...")
-        result = subprocess.run(["make", "install"], stdout=REDIRECT, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "install"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to install winpthreads ", arch)
