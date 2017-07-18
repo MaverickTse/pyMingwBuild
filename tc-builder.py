@@ -642,11 +642,8 @@ def guess_config():
     if "sh" not in shell_type:
         print("guess.config need to be run in bash-like shell")
         return None
-    system_string = ""
-    if "CI" in os.environ:
-        system_string = subprocess.run(["sh", "config.guess"], stdout=subprocess.PIPE).stdout.decode("utf-8")
-    else:
-        system_string = subprocess.run(["sh", "config.guess"], stdout=subprocess.STDOUT).stdout.decode("utf-8")
+
+    system_string = subprocess.run(["sh", "config.guess"], stdout=subprocess.PIPE).stdout.decode("utf-8")
 
     return system_string
 
@@ -1346,7 +1343,7 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
     :return: tuple of build_paths on success, (None,None) when failed
     """
     global WORK_FOLDER, LOCATIONS, TARGET, USE_SJLJ
-    result = None
+
     build_target = ["i686", "x86_64"]
     os.chdir(WORK_FOLDER)
     abs_source = os.path.abspath(source_folder)
@@ -1411,12 +1408,8 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
         cpu_count = str(run_nproc())
         print("Building GCC (1 of 2) ", target, "...")
 
-        if "CI" in os.environ:
-            result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
-                                    stdout=subprocess.STDOUT, stderr=subprocess.PIPE)
-        else:
-            result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Failed to build GCC (1 of 2) ", TARGET[target])
@@ -1461,7 +1454,7 @@ def build_crt(source_folder, build_folder, system_type):
     :return: True when success. None when failed.
     """
     global WORK_FOLDER, LOCATIONS, TARGET
-    result = None
+
     build_target = ["i686", "x86_64"]
     os.chdir(WORK_FOLDER)
     abs_source = os.path.abspath(source_folder)
@@ -1523,10 +1516,7 @@ def build_crt(source_folder, build_folder, system_type):
         # actual build
         cpu_count = str(run_nproc())
         print("Building Mingw-w64 CRT", t, "...")
-        if "CI" in os.environ:
-            result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.STDOUT, stderr=subprocess.PIPE)
-        else:
-            result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode:
             print_error()
             print("Error building Mingw-w64 CRT", t)
@@ -1574,17 +1564,13 @@ def build_gcc2(build_folder):
     :return: True on success. None on failure.
     """
     global WORK_FOLDER
-    result = None
+
     os.chdir(WORK_FOLDER)
     cpu_cores = str(run_nproc())
     for folder in build_folder:
         os.chdir(folder)
         print("Building libGCC in ", folder, "...")
-        if "CI" in os.environ:
-            result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
-                                    stdout=subprocess.STDOUT, stderr=subprocess.PIPE)
-        else:
-            result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
+        result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if result.returncode:
@@ -1619,12 +1605,8 @@ def build_gcc2(build_folder):
             return None
 
         print("Building GCC in ", folder, "...")
-        if "CI" in os.environ:
-            result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.STDOUT,
-                                    stderr=subprocess.PIPE)
-        else:
-            result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+        result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
 
         if result.returncode:
             print_error()
