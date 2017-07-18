@@ -17,17 +17,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
-      env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
             - g++-5
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
@@ -56,4 +45,4 @@ before_script:
 - cd $TRAVIS_BUILD_DIR
 
 script:
-- python3 tc-builder.py
+- travis_wait 30 python3 tc-builder.py
