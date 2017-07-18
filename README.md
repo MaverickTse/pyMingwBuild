@@ -1,3 +1,5 @@
+ TravisCI [![Build Status](https://travis-ci.org/MaverickTse/pyMingwBuild.svg?branch=master)](https://travis-ci.org/MaverickTse/pyMingwBuild)
+ 
 # pyMingwBuild
 Python(Anaconda) script to build Mingw-w64 cross-toolchain
 
