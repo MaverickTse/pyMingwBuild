@@ -8,9 +8,9 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-5
+      - wine
 env:
-  - CC=gcc-5
-  - CXX=g++-5   
+  - CC=gcc-5 && CXX=g++-5   
 
     
 before_script:
@@ -28,4 +28,6 @@ script:
 - i686-w64-mingw32-g++ std=c++14 compiler-test.cpp -o compiler-test32.exe
 - x86_64-w64-mingw32-g++ std=c++14 compiler-test.cpp -o compiler-test64.exe
 - source ./MWTC/restore.sh
+- wine compiler-test32.exe 100000
+- wine compiler-test64.exe 100000
 
