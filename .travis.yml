@@ -1,0 +1,31 @@
+sudo: required
+os: linux
+language: cpp
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5
+env:
+  - CC=gcc-5
+  - CXX=g++-5   
+
+    
+before_script:
+- wget https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh -O condainstall.sh
+- bash condainstall.sh -b -p $HOME/Anaconda
+- source $HOME/Anaconda/bin/activate
+- conda config --set always_yes yes
+- conda update -q conda
+- cd $TRAVIS_BUILD_DIR
+
+script:
+- python3 tc-builder.py --help
+- python3 tc-builder.py --sjlj
+- source ./MWTC/use32.sh
+- i686-w64-mingw32-g++ std=c++14 compiler-test.cpp -o compiler-test32.exe
+- x86_64-w64-mingw32-g++ std=c++14 compiler-test.cpp -o compiler-test64.exe
+- source ./MWTC/restore.sh
+
