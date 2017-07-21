@@ -1408,8 +1408,16 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
         cpu_count = str(run_nproc())
         print("Building GCC (1 of 2) ", target, "...")
 
-        result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
+        #                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        result = subprocess.Popen(["make", "-j", cpu_count, "all-gcc"],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        while result.poll() is None:
+            print('.', end='')
+            time.sleep(10)
+
         if result.returncode:
             print_error()
             print("Failed to build GCC (1 of 2) ", TARGET[target])
@@ -1516,7 +1524,13 @@ def build_crt(source_folder, build_folder, system_type):
         # actual build
         cpu_count = str(run_nproc())
         print("Building Mingw-w64 CRT", t, "...")
-        result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.Popen(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        while result.poll() is None:
+            print('.', end='')
+            time.sleep(10)
+        print('')
         if result.returncode:
             print_error()
             print("Error building Mingw-w64 CRT", t)
@@ -1570,9 +1584,14 @@ def build_gcc2(build_folder):
     for folder in build_folder:
         os.chdir(folder)
         print("Building libGCC in ", folder, "...")
-        result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        # result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
+        #                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.Popen(["make", "-j", cpu_cores, "all-target-libgcc"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        while result.poll() is None:
+            print('.', end='')
+            time.sleep(10)
+        print('')
         if result.returncode:
             print_error()
             print("Error building libGCC!")
@@ -1605,9 +1624,14 @@ def build_gcc2(build_folder):
             return None
 
         print("Building GCC in ", folder, "...")
-        result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-
+        # result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
+        #                        stderr=subprocess.PIPE)
+        result = subprocess.Popen(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+        while result.poll() is None:
+            print('.', end='')
+            time.sleep(10)
+        print('')
         if result.returncode:
             print_error()
             print("Error building GCC!")
