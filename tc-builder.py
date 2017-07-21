@@ -1410,12 +1410,12 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
 
         #result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
         #                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        result = None
         result = subprocess.Popen(["make", "-j", cpu_count, "all-gcc"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         while result.poll() is None:
-            print('.', end='')
+            print('.')
             time.sleep(10)
 
         if result.returncode:
@@ -1526,9 +1526,10 @@ def build_crt(source_folder, build_folder, system_type):
         print("Building Mingw-w64 CRT", t, "...")
 
         # result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = None
         result = subprocess.Popen(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         while result.poll() is None:
-            print('.', end='')
+            print('.')
             time.sleep(10)
         print('')
         if result.returncode:
@@ -1586,10 +1587,11 @@ def build_gcc2(build_folder):
         print("Building libGCC in ", folder, "...")
         # result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
         #                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = None
         result = subprocess.Popen(["make", "-j", cpu_cores, "all-target-libgcc"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         while result.poll() is None:
-            print('.', end='')
+            print('.')
             time.sleep(10)
         print('')
         if result.returncode:
@@ -1626,10 +1628,11 @@ def build_gcc2(build_folder):
         print("Building GCC in ", folder, "...")
         # result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
         #                        stderr=subprocess.PIPE)
+        result = None
         result = subprocess.Popen(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE)
         while result.poll() is None:
-            print('.', end='')
+            print('.')
             time.sleep(10)
         print('')
         if result.returncode:
