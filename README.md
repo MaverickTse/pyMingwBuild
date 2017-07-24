@@ -17,19 +17,21 @@ To build 32bit and 64bit non-multilib STATIC Mingw-w64 toolchain in a bash-like 
 - Only use FTP and HTTP downloads, no need of wget or git or svn
 - multi-threaded download (2 by default)
 - Skip decompression if downloaded tarball has the same MD5 checksum
+- include pkgconf
 - Automatic benchmark record
 - Build-report generation (readme.txt)
-- Helper script generation for PATH manipulation (use32.sh, use64.sh, restore.sh)
+- Helper script generation for PATH and CC manipulation (use32.sh, use64.sh, restore.sh)
 - EASIER to comprehend and customize than a BASH Script
 
 
 ## Prerequisite
 - Linux/ Win10 WSL
-- [Anaconda Linux 64-bit with Python 3.6 or newer](https://www.continuum.io/downloads)
+- [Anaconda Linux 64-bit with Python 3.6 or newer](https://www.continuum.io/downloads) or Python3.6+BeautifulSoup4
 - [build-essential](https://packages.ubuntu.com/xenial/build-essential)
 - [automake](https://packages.ubuntu.com/xenial/automake)
 - [Texinfo](https://packages.ubuntu.com/xenial/texinfo)
 - [yasm](https://packages.ubuntu.com/xenial/yasm)
+- clang (optional. Tested with GCC 4.9+ and Clang 3.8)
 
 
 ## How to Use
@@ -81,7 +83,7 @@ To start using the 64bit Mingw toolchain
 Test compile with:
 
 ```bash
-x86_64-w64-mingw32-g++ std=c++14 compiler-test.cpp -o /windows/accessible/folder/compiler-test64.exe
+$CXX std=c++14 compiler-test.cpp -o /mnt/c/compiler-test64.exe
 ```
 
 and run compiler-test64.exe from Windows. Check if multiple CPU cores have increased activity.
