@@ -1900,8 +1900,8 @@ def generate_documentation():
     restore_script_template = """\
     #!/bin/sh
     export PATH="{new_path}"
-    export CC="{old_cc}"
-    export CXX="{old_cxx}"
+    unset CC
+    unset CXX
     unset RC
     unset PREFIX
     printf "Original PATH restored\\n"
@@ -1920,8 +1920,7 @@ def generate_documentation():
     print("Use use64.sh to setup for 64bit toolchain\n")
 
     with open("restore.sh", "w") as file:
-        file.write(restore_script_template.format(new_path=original_path,
-                                                  old_cc=os.environ["CC"], old_cxx=os.environ["CXX"]))
+        file.write(restore_script_template.format(new_path=original_path))
     st = os.stat("restore.sh")
     os.chmod("restore.sh", st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     print("Use restore.sh to restore the PATH variable\n")
