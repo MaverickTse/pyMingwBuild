@@ -109,10 +109,11 @@ PRIMARY_FTP_FOLDERS = {
     "cloog": "/pub/gcc/infrastructure/"
 }
 
-HTML_DOWNLOADS = ["mingw64"]
+HTML_DOWNLOADS = ["mingw64", "pkgconf"]
 
 HTML_URLS = {
-    "mingw64": "https://github.com/mirror/mingw-w64/releases"
+    "mingw64": "https://github.com/mirror/mingw-w64/releases",
+    "pkgconf": "https://distfiles.dereferenced.org/pkgconf/"
 }
 
 FILENAME_PATTERNS = {
@@ -123,7 +124,8 @@ FILENAME_PATTERNS = {
     "mpc": r"^mpc-([0-9.]+).tar.gz$",
     "isl": r"^isl-([0-9.]+).tar.bz2$",
     "cloog": r"^cloog-([0-9.]+).tar.gz$",
-    "mingw64": r".+?([0-9.]+).tar.gz$"
+    "mingw64": r".+?([0-9.]+).tar.gz$",
+    "pkgconf": r".+?([0-9.]+).tar.gz$"
 }
 
 FILENAME_VERSION_CAPTURE = {
@@ -134,7 +136,8 @@ FILENAME_VERSION_CAPTURE = {
     "mpc": 1,
     "isl": 1,
     "cloog": 1,
-    "mingw64": 1
+    "mingw64": 1,
+    "pkgconf": 1
 }
 
 FOLDER_PATTERNS = {
@@ -175,7 +178,8 @@ PREFERRED_FILE_VERSION = {
     "mpc": "99",
     "isl": "99",
     "cloog": "99",
-    "mingw64": "99"
+    "mingw64": "99",
+    "pkgconf": "99"
 }
 
 SAVE_PATH = {
@@ -186,7 +190,8 @@ SAVE_PATH = {
     "mpc": "./dl/mpc.tar.gz",
     "isl": "./dl/isl.tar.bz2",
     "cloog": "./dl/cloog.tar.gz",
-    "mingw64": "./dl/mingw64.tar.gz"
+    "mingw64": "./dl/mingw64.tar.gz",
+    "pkgconf": "./dl/pkgconf.tar.gz"
 }
 
 LOCATIONS = {
@@ -1397,26 +1402,22 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
             with open("config_error.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
             return None, None
         # actual build
         cpu_count = str(run_nproc())
         print("Building GCC (1 of 2) ", target, "...")
 
-        #result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
-        #                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        result = None
-        result = subprocess.Popen(["make", "-j", cpu_count, "all-gcc"],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        while result.poll() is None:
-            print('.')
-            time.sleep(10)
+        result = subprocess.run(["make", "-j", cpu_count, "all-gcc"],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # result = None
+        # result = subprocess.Popen(["make", "-j", cpu_count, "all-gcc"],
+        #                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #
+        # while result.poll() is None:
+        #     print('.')
+        #     time.sleep(10)
 
         if result.returncode:
             print_error()
@@ -1424,12 +1425,8 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
             with open("build_error.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
             return None, None
         # Install GCC
         print("Installing GCC (1 of 2) ", target, "...")
@@ -1441,12 +1438,8 @@ def build_gcc1(source_folder, build_folder, system_type, gmp_prefix, mpfr_prefix
             with open("install_error.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
             return None, None
 
     os.chdir(WORK_FOLDER)
@@ -1525,13 +1518,13 @@ def build_crt(source_folder, build_folder, system_type):
         cpu_count = str(run_nproc())
         print("Building Mingw-w64 CRT", t, "...")
 
-        # result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        result = None
-        result = subprocess.Popen(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        while result.poll() is None:
-            print('.')
-            time.sleep(10)
-        print('')
+        result = subprocess.run(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # result = None
+        # result = subprocess.Popen(["make", "-j", cpu_count], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # while result.poll() is None:
+        #     print('.')
+        #     time.sleep(10)
+        # print('')
         if result.returncode:
             print_error()
             print("Error building Mingw-w64 CRT", t)
@@ -1557,14 +1550,17 @@ def build_crt(source_folder, build_folder, system_type):
         # is this necessary?
         print("Performing folder rename for unknown purpose... :-/")
         os.chdir(abs_prefix[t])
-        from_folder = os.path.join("./", TARGET[t], "lib")
-        to_folder = os.path.join("./", "lib")
+        from_folder = os.path.abspath(os.path.join("./", TARGET[t], "lib"))
+        to_folder = os.path.abspath(os.path.join("./", "lib"))
         move(from_folder, to_folder)
         #rmtree(from_folder) # if moved sucessfully, the original is gone...
         #actually why not just make symlink in the top folder???
         os.chdir(os.path.join("./", TARGET[t]))
         if not os.path.exists("./lib"):
             os.symlink("../lib", "./lib")
+        # if not os.path.exists(to_folder):
+        #     os.symlink(from_folder, to_folder)
+
         os.chdir(WORK_FOLDER)
         # restore PATH
         os.environ["PATH"] = path_var["original"]
@@ -1585,14 +1581,14 @@ def build_gcc2(build_folder):
     for folder in build_folder:
         os.chdir(folder)
         print("Building libGCC in ", folder, "...")
-        # result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
-        #                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        result = None
-        result = subprocess.Popen(["make", "-j", cpu_cores, "all-target-libgcc"],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        while result.poll() is None:
-            print('.')
-            time.sleep(10)
+        result = subprocess.run(["make", "-j", cpu_cores, "all-target-libgcc"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # result = None
+        # result = subprocess.Popen(["make", "-j", cpu_cores, "all-target-libgcc"],
+        #                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # while result.poll() is None:
+        #     print('.')
+        #     time.sleep(10)
         print('')
         if result.returncode:
             print_error()
@@ -1600,12 +1596,8 @@ def build_gcc2(build_folder):
             with open("build_error_libgcc.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
             return None
 
         print("Installing libGCC...")
@@ -1617,36 +1609,28 @@ def build_gcc2(build_folder):
             with open("install_error_libgcc.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
             return None
 
         print("Building GCC in ", folder, "...")
-        # result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
-        #                        stderr=subprocess.PIPE)
-        result = None
-        result = subprocess.Popen(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-        while result.poll() is None:
-            print('.')
-            time.sleep(10)
-        print('')
+        result = subprocess.run(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+        # result = None
+        # result = subprocess.Popen(["make", "-j", cpu_cores], stdout=subprocess.PIPE,
+        #                           stderr=subprocess.PIPE)
+        # while result.poll() is None:
+        #     print('.')
+        #     time.sleep(10)
+        # print('')
         if result.returncode:
             print_error()
             print("Error building GCC!")
             with open("build_error_gcc.log", "w") as f:
                 message = result.stdout.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
                 message = result.stderr.decode("utf-8")
                 f.write(message)
-                if os.environ["CI"]:
-                    print(message)
             return None
 
         print("Installing GCC...")
@@ -1763,6 +1747,84 @@ def build_winpthreads(source_folder, build_folder, system_type):
     return True
 
 
+def build_pkgconf(source_folder, build_folder, system_type):
+    global WORK_FOLDER, LOCATIONS, TARGET, USE_SJLJ
+
+    build_target = ["i686", "x86_64"]
+    os.chdir(WORK_FOLDER)
+    abs_source = os.path.abspath(source_folder)
+    config_path = os.path.join(abs_source, "configure")
+    abs_build_common = os.path.join(os.path.abspath(build_folder), "pkgconf")
+
+    build_paths = {
+        "i686": os.path.join(abs_build_common, "i686"),
+        "x86_64": os.path.join(abs_build_common, "x86_64")
+    }
+
+    abs_prefix = {
+        "i686": os.path.abspath(LOCATIONS["mingw_w64_i686_prefix"]),
+        "x86_64": os.path.abspath(LOCATIONS["mingw_w64_x86_64_prefix"])
+    }
+
+    # purge old build files
+    if os.path.exists(abs_build_common):
+        rmtree(abs_build_common)
+    os.makedirs(build_paths["i686"])
+    os.makedirs(build_paths["x86_64"])
+    for target in build_target:
+        os.chdir(build_paths[target])
+        print("Configuring pkgconf ", target, "...")
+        arg_prefix = "--prefix="+ abs_prefix[target]
+        arg_libdir = "--with-system-libdir=" + os.path.join(abs_prefix[target], "lib")
+        arg_inc = "--with-system-includedir=" + os.path.join(abs_prefix[target], "include")
+        result = subprocess.run(["sh", config_path, arg_prefix, arg_libdir, arg_inc],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode:
+            print_error()
+            print("Failed to configure pkgconf ", TARGET[target])
+            with open("config_error.log", "w") as f:
+                message = result.stdout.decode("utf-8")
+                f.write(message)
+                message = result.stderr.decode("utf-8")
+                f.write(message)
+            return None
+        cpu_count = str(run_nproc())
+        print("Building pkgconf ", target, "...")
+
+        result = subprocess.run(["make", "-j", cpu_count],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # while result.poll() is None:
+        #     print('.')
+        #     time.sleep(10)
+
+        if result.returncode:
+            print_error()
+            print("Failed to build pkgconf ", TARGET[target])
+            with open("build_error.log", "w") as f:
+                message = result.stdout.decode("utf-8")
+                f.write(message)
+                message = result.stderr.decode("utf-8")
+                f.write(message)
+            return None
+        # Install GCC
+        print("Installing pkgconf ", target, "...")
+        result = subprocess.run(["make", "install"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode:
+            print_error()
+            print("Failed to install pkgconf ", TARGET[target])
+            with open("install_error.log", "w") as f:
+                message = result.stdout.decode("utf-8")
+                f.write(message)
+                message = result.stderr.decode("utf-8")
+                f.write(message)
+            return None
+        os.chdir(os.path.join(abs_prefix[target],"bin"))
+        os.symlink("pkgconf", "pkg-config")
+    os.chdir(WORK_FOLDER)
+    return True
+
+
 def generate_documentation():
     """
     Generate readme and helper scripts
@@ -1829,11 +1891,15 @@ def generate_documentation():
     #!/bin/sh
     export PATH="{new_path}"
     {arch}-w64-mingw32-gcc -v
+    export CC="{arch}-w64-mingw32-gcc"
+    export CXX="{arch}-w64-mingw32-g++"
     """
 
     restore_script_template = """\
     #!/bin/sh
     export PATH="{new_path}"
+    export CC="{old_cc}"
+    export CXX="{old_cxx}"
     printf "Original PATH restored\\n"
     """
 
@@ -1850,7 +1916,8 @@ def generate_documentation():
     print("Use use64.sh to setup for 64bit toolchain\n")
 
     with open("restore.sh", "w") as file:
-        file.write(restore_script_template.format(new_path=original_path))
+        file.write(restore_script_template.format(new_path=original_path,
+                                                  old_cc=os.environ["CC"], old_cxx=os.environ["CXX"]))
     st = os.stat("restore.sh")
     os.chmod("restore.sh", st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     print("Use restore.sh to restore the PATH variable\n")
@@ -1871,6 +1938,12 @@ def main():
         print("Creating work folder: ", WORK_FOLDER)
         os.makedirs(WORK_FOLDER)
         os.chdir(WORK_FOLDER)
+
+    # purge target folders
+    if os.path.exists(os.path.join("./", LOCATIONS["mingw_w64_i686_prefix"])):
+        rmtree(os.path.join("./", LOCATIONS["mingw_w64_i686_prefix"]))
+    if os.path.exists(os.path.join("./", LOCATIONS["mingw_w64_x86_64_prefix"])):
+        rmtree(os.path.join("./", LOCATIONS["mingw_w64_x86_64_prefix"]))
 
     for item, path in LOCATIONS.items():
         ex_path = os.path.expandvars(path)
@@ -1894,7 +1967,7 @@ def main():
 
     # Retrieve extracted folder path
     source_folders = {}
-    all_components = ["binutils", "gcc", "gmp", "mpfr", "mpc", "isl", "cloog", "mingw-w64"]
+    all_components = ["binutils", "gcc", "gmp", "mpfr", "mpc", "isl", "cloog", "mingw-w64", "pkgconf"]
     with os.scandir(LOCATIONS["pkg_dir"]) as it:
         for entry in it:
             if not entry.is_dir():
@@ -2051,6 +2124,18 @@ def main():
     timer2 = datetime.datetime.utcnow()
     PERFORMANCE_COUNTER["GCC2"] = timer2 - timer1
 
+    # build pkgconf
+    timer1 = datetime.datetime.utcnow()
+    state = build_pkgconf(source_folders["pkgconf"], LOCATIONS["mingw_w64_build_dir"], SYSTEM_TYPE)
+    if not state:
+        print_error()
+        print("Failed to pkgconf. Build terminated.")
+        return False
+    else:
+        print_ok()
+        print("Built pkgconf")
+    timer2 = datetime.datetime.utcnow()
+    PERFORMANCE_COUNTER["pkgconf"] = timer2 - timer1
     # Generate readme and helper scripts
     generate_documentation()
     return True
@@ -2064,6 +2149,11 @@ parser.add_argument("--gcc", "-g", default="99", help="Version string for prefer
 parser.add_argument("--binutils", "-b", default="99", help="Version string for preferred Binutils[99]")
 parser.add_argument("--mingw", "-m", default="99", help="Version string for preferred Mingw-w64[99]")
 parser.add_argument("--sjlj", action='store_true', help="Use sjlj exception handling for win32. Default is dw2")
+parser.add_argument("--skip-gmp", action="store_true", default=argparse.SUPPRESS, help="skip building GMP")
+parser.add_argument("--skip-mpfr", action="store_true", default=argparse.SUPPRESS, help="skip building MPFR")
+parser.add_argument("--skip-isl", action="store_true", default=argparse.SUPPRESS, help="skip building ISL")
+parser.add_argument("--skip-mpc", action="store_true", default=argparse.SUPPRESS, help="skip building MPC")
+parser.add_argument("--skip-gcc1", action="store_true", default=argparse.SUPPRESS, help="skip building GCC1")
 raw_args = parser.parse_args()
 args = vars(raw_args)
 WORK_FOLDER = args["prefix"]
