@@ -1893,6 +1893,8 @@ def generate_documentation():
     {arch}-w64-mingw32-gcc -v
     export CC="{arch}-w64-mingw32-gcc"
     export CXX="{arch}-w64-mingw32-g++"
+    export RC="{arch}-w64-mingw32-windres"
+    export PREFIX="mingw-w64-{arch}"
     """
 
     restore_script_template = """\
@@ -1900,6 +1902,8 @@ def generate_documentation():
     export PATH="{new_path}"
     export CC="{old_cc}"
     export CXX="{old_cxx}"
+    unset RC
+    unset PREFIX
     printf "Original PATH restored\\n"
     """
 
