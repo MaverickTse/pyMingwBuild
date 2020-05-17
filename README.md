@@ -1,5 +1,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c50c40979103401db073a3e0ef349596)](https://www.codacy.com/app/MaverickTse/pyMingwBuild?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=MaverickTse/pyMingwBuild&amp;utm_campaign=Badge_Grade)
- 
+
+# 【UNMAINTAINED】
+
 # pyMingwBuild
 Python(Anaconda) script to build Mingw-w64 cross-toolchain
 
